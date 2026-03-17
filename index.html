@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WCAG Experience — Feel the Difference</title>
+  <style>
+    /* ===== BASE RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      background: #111;
+      transition: background 0.5s;
+    }
+
+    /* ===== CONTROL BAR (always visible) ===== */
+    .control-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 32px;
+      background: #1a1a2e;
+      border-bottom: 3px solid #e94560;
+      color: #fff;
+    }
+
+    .control-bar h1 {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .control-bar .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    .ctrl-btn {
+      padding: 10px 24px;
+      border: 2px solid #e94560;
+      border-radius: 8px;
+      background: transparent;
+      color: #e94560;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .ctrl-btn:hover, .ctrl-btn:focus {
+      background: #e94560;
+      color: #fff;
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+
+    .ctrl-btn.active {
+      background: #16c79a;
+      border-color: #16c79a;
+      color: #fff;
+    }
+
+    .ctrl-btn.reveal {
+      border-color: #f0a500;
+      color: #f0a500;
+    }
+
+    .ctrl-btn.reveal:hover, .ctrl-btn.reveal:focus {
+      background: #f0a500;
+      color: #fff;
+    }
+
+    .ctrl-btn.reveal.active {
+      background: #f0a500;
+      border-color: #f0a500;
+      color: #fff;
+    }
+
+    .score-display {
+      color: #eee;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .score-display .score-num {
+      font-size: 28px;
+      font-weight: 700;
+      color: #e94560;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .timer {
+      font-family: monospace;
+      font-size: 16px;
+      color: #e94560;
+      font-weight: 700;
+    }
+
+    /* ===== STEP INDICATOR ===== */
+    .step-bar {
+      position: fixed;
+      top: 64px;
+      left: 0;
+      right: 0;
+      z-index: 9998;
+      background: #16213e;
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #667;
+      background: #0d1b3e;
+      border: 1px solid #2a2a4a;
+      transition: all 0.3s;
+    }
+
+    .step.current {
+      color: #fff;
+      background: #e94560;
+      border-color: #e94560;
+    }
+
+    .step.done {
+      color: #16c79a;
+      background: #0d2e1f;
+      border-color: #16c79a;
+    }
+
+    .step-arrow {
+      color: #444;
+      font-size: 14px;
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .page-content {
+      margin-top: 120px;
+      padding: 40px 32px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ===== INSTRUCTIONS BANNER (always visible) ===== */
+    .instructions {
+      background: #0f3460;
+      color: #fff;
+      padding: 24px 32px;
+      border-radius: 12px;
+      margin-bottom: 36px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .instructions h2 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .instructions p {
+      font-size: 15px;
+      opacity: 0.9;
+    }
+
+    .instructions .key {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 4px;
+      padding: 1px 8px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .instructions .step-label {
+      display: inline-block;
+      background: rgba(233,69,96,0.3);
+      border: 1px solid #e94560;
+      border-radius: 4px;
+      padding: 2px 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin: 0 2px;
+    }
+
+    /* ===== TASK CARD ===== */
+    .task-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+      border: 1px solid #e8e8e8;
+    }
+
+    .task-card h3 {
+      font-size: 18px;
+      margin-bottom: 6px;
+      color: #1a1a2e;
+    }
+
+    .task-card .task-desc {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    /* ===== FORM ELEMENTS ===== */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    .submit-btn {
+      padding: 12px 32px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 8px;
+      background: #0f3460;
+      color: #fff;
+      border: 2px solid #0f3460;
+    }
+
+    /* ===== IMAGE SECTION ===== */
+    .image-section {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .image-box {
+      flex: 1;
+      background: #f0f4ff;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .image-box img {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      display: block;
+      margin: 0 auto 10px;
+    }
+
+    .image-box p {
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* ===== TABLE ===== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 16px;
+    }
+
+    .data-table th, .data-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid #e8e8e8;
+    }
+
+    .data-table .hdr,
+    .data-table th {
+      background: #f7f7f7;
+      font-weight: 600;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .data-table td {
+      font-size: 14px;
+    }
+
+    /* ===== STATUS BAR ===== */
+    .status-bar {
+      padding: 12px 20px;
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .status-bar.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-bar.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* ===== CHECKLIST ===== */
+    .checklist {
+      list-style: none;
+      margin-top: 12px;
+    }
+
+    .checklist li {
+      padding: 8px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .checklist li .check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    /* ===== RESULT MODAL ===== */
+    .result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .result-modal h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .result-modal p {
+      font-size: 15px;
+      color: #555;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .result-modal .close-modal {
+      padding: 10px 28px;
+      background: #0f3460;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .result-modal .close-modal:focus {
+      outline: 3px solid #e94560;
+      outline-offset: 2px;
+    }
+
+    /* ===== SCREEN READER ONLY ===== */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+
+    /* ============================================================
+       BLIND MODE — content COMPLETELY invisible, header stays
+       ============================================================ */
+    body.blind .task-card {
+      background: #111;
+      border-color: #111;
+      box-shadow: none;
+    }
+
+    body.blind .task-card h3,
+    body.blind .task-card .task-desc,
+    body.blind .form-group label,
+    body.blind .image-box p,
+    body.blind .data-table th,
+    body.blind .data-table td,
+    body.blind .data-table .hdr,
+    body.blind .checklist li,
+    body.blind .checklist li .check {
+      color: #111 !important;
+    }
+
+    body.blind .form-group input,
+    body.blind .form-group select,
+    body.blind .form-group textarea {
+      background: #111;
+      border-color: #111;
+      color: #111;
+      caret-color: #111;
+    }
+
+    body.blind .form-group input::placeholder,
+    body.blind .form-group textarea::placeholder {
+      color: #111;
+    }
+
+    body.blind .submit-btn {
+      background: #111;
+      color: #111;
+      border-color: #111;
+    }
+
+    body.blind .image-box {
+      background: #111;
+    }
+
+    body.blind .image-box img {
+      filter: brightness(0);
+    }
+
+    body.blind .data-table .hdr,
+    body.blind .data-table th {
+      background: #111;
+    }
+
+    body.blind .data-table td {
+      border-color: #111;
+    }
+
+    body.blind .checklist li .check {
+      background: #111;
+      color: #111;
+    }
+
+    body.blind .checklist li {
+      border-color: #111;
+    }
+
+    body.blind .status-bar {
+      background: #111 !important;
+      color: #111 !important;
+      border-color: #111 !important;
+    }
+
+    /* ===== NO WCAG — no focus indicators at all ===== */
+    body.blind.no-wcag *:focus {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+
+    body.blind.no-wcag .form-group input:focus,
+    body.blind.no-wcag .form-group select:focus,
+    body.blind.no-wcag .form-group textarea:focus {
+      border-color: #111 !important;
+    }
+
+    /* ===== REVEALED MODE — everything visible ===== */
+    body.revealed {
+      background: #f5f7fa;
+    }
+
+    body.revealed .control-bar {
+      border-bottom-color: #16c79a;
+    }
+
+    body.revealed .form-group input:focus,
+    body.revealed .form-group select:focus,
+    body.revealed .form-group textarea:focus {
+      outline: 3px solid #0f3460;
+      outline-offset: 2px;
+      border-color: #0f3460;
+    }
+
+    body.revealed .submit-btn {
+      background: #0f3460;
+      color: #fff;
+      border-color: #0f3460;
+    }
+
+    body.revealed .submit-btn:hover {
+      background: #16c79a;
+      border-color: #16c79a;
+    }
+
+    body.revealed .submit-btn:focus {
+      outline: 3px solid #e94560;
+      outline-offset: 2px;
+    }
+
+    body.revealed img:focus,
+    body.revealed .data-table td:focus,
+    body.revealed .data-table th:focus {
+      outline: 3px solid #0f3460;
+      outline-offset: 2px;
+    }
+
+    body.revealed .checklist li .check.fixed {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    /* ===== COMPARISON OVERLAY ===== */
+    .comparison-banner {
+      display: none;
+      background: #16213e;
+      border: 2px solid #16c79a;
+      border-radius: 12px;
+      padding: 20px 28px;
+      margin-bottom: 28px;
+      color: #fff;
+    }
+
+    .comparison-banner h3 {
+      color: #16c79a;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .comparison-banner table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .comparison-banner th,
+    .comparison-banner td {
+      padding: 6px 12px;
+      text-align: left;
+      font-size: 13px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+
+    .comparison-banner th {
+      color: #aaa;
+      font-weight: 600;
+    }
+
+    .comparison-banner .off { color: #e94560; }
+    .comparison-banner .on { color: #16c79a; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    body.revealed .task-card {
+      animation: fadeIn 0.4s ease-out;
+    }
+  </style>
+</head>
+
+<body class="blind no-wcag">
+
+  <!-- ===== CONTROL BAR (always visible) ===== -->
+  <header class="control-bar" role="banner">
+    <div>
+      <h1>
+        WCAG Experience
+        <span class="badge" id="modeBadge" style="background:#e94560;color:#fff;">WCAG OFF</span>
+      </h1>
+    </div>
+    <div class="score-display">
+      <div>Score</div>
+      <div class="score-num" id="scoreDisplay">0</div>
+      <div>of 5</div>
+    </div>
+    <div class="btn-group">
+      <div class="timer" id="timerDisplay">00:00</div>
+      <button class="ctrl-btn" id="wcagBtn" onclick="toggleWCAG()" aria-label="Toggle WCAG accessibility features">
+        Enable WCAG
+      </button>
+      <button class="ctrl-btn reveal" id="revealBtn" onclick="revealContent()" aria-label="Reveal or hide all page content">
+        Reveal Content
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== STEP INDICATOR ===== -->
+  <nav class="step-bar" aria-label="Challenge steps">
+    <div class="step current" id="step1">Step 1: Navigate Blind (No WCAG)</div>
+    <span class="step-arrow">&#8594;</span>
+    <div class="step" id="step2">Step 2: Navigate Blind (With WCAG)</div>
+    <span class="step-arrow">&#8594;</span>
+    <div class="step" id="step3">Step 3: Reveal &amp; Compare</div>
+  </nav>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="page-content" role="main">
+
+    <!-- Instructions (always visible) -->
+    <div class="instructions" id="instructions">
+      <h2>The Accessibility Challenge</h2>
+      <p>
+        The content below is <strong>completely invisible</strong>. Turn on <strong>VoiceOver</strong> (<span class="key">Cmd + F5</span>).
+      </p>
+      <p style="text-align:left; margin-top:12px; line-height:2;">
+        <strong>VoiceOver Keys (VO = Control + Option):</strong><br>
+        <span class="key">VO + →</span> / <span class="key">VO + ←</span> &nbsp; Move to next / previous element<br>
+        <span class="key">VO + Space</span> &nbsp; Click / activate a button or link<br>
+        <span class="key">Tab</span> &nbsp; Jump to next form field (input / select / button)<br>
+        <span class="key">VO + Cmd + ↓</span> / <span class="key">↑</span> / <span class="key">←</span> / <span class="key">→</span> &nbsp; Navigate inside a table
+      </p>
+      <p style="margin-top:14px;">
+        <span class="step-label">Step 1</span> Use VoiceOver to navigate. You'll hear "edit text" (no labels), images are skipped, table has no column context.<br>
+        <span class="step-label">Step 2</span> Click <strong>"Enable WCAG"</strong> — navigate again. Now VoiceOver reads field names, describes images, and announces table columns.<br>
+        <span class="step-label">Step 3</span> Click <strong>"Reveal Content"</strong> to see what was hidden all along.
+      </p>
+    </div>
+
+    <!-- Comparison banner (shown after reveal) -->
+    <div class="comparison-banner" id="comparisonBanner">
+      <h3>What VoiceOver Experience Changed With WCAG</h3>
+      <table>
+        <thead>
+          <tr><th>Feature</th><th class="off">Without WCAG (VoiceOver)</th><th class="on">With WCAG (VoiceOver)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Form Labels</td><td class="off">"edit text" — no idea what field this is</td><td class="on">"Full Name, edit text" — clear label</td></tr>
+          <tr><td>Image Alt Text</td><td class="off">"image" — no description at all</td><td class="on">"Analytics Dashboard chart, image"</td></tr>
+          <tr><td>Table Navigation</td><td class="off">Flat text, no row / column context</td><td class="on">"Column 1, Product: Wireless Mouse, Column 3, Price: 19.50"</td></tr>
+          <tr><td>Button Purpose</td><td class="off">"Save Registration, button" — generic</td><td class="on">"Save registration form, button" — descriptive</td></tr>
+          <tr><td>Status Messages</td><td class="off">No announcement after submit</td><td class="on">VoiceOver announces "Welcome, John! Registration saved."</td></tr>
+          <tr><td>Page Structure</td><td class="off">No landmarks — VoiceOver can't find sections</td><td class="on">VoiceOver announces "Main, WCAG Challenge Tasks"</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== TASK 1: Registration Form ===== -->
+    <div class="task-card" id="task1">
+      <h3>Task 1 — Register Yourself</h3>
+      <p class="task-desc">Fill in your name and email, then click Save.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label id="nameLabel">Full Name</label>
+          <input type="text" id="nameInput" placeholder="Enter your full name" data-task="1">
+        </div>
+        <div class="form-group">
+          <label id="emailLabel">Email Address</label>
+          <input type="email" id="emailInput" placeholder="you@example.com" data-task="1">
+        </div>
+      </div>
+
+      <button class="submit-btn" id="task1Btn" onclick="submitTask(1)">Save Registration</button>
+      <div class="status-bar" id="status1"></div>
+    </div>
+
+    <!-- ===== TASK 2: Select a Role ===== -->
+    <div class="task-card" id="task2">
+      <h3>Task 2 — Choose Your Role</h3>
+      <p class="task-desc">Select a role from the dropdown and confirm.</p>
+
+      <div class="form-group">
+        <label id="roleLabel">Role</label>
+        <select id="roleSelect" data-task="2">
+          <option value="">-- Select a Role --</option>
+          <option value="developer">Developer</option>
+          <option value="designer">Designer</option>
+          <option value="manager">Manager</option>
+          <option value="tester">Tester</option>
+        </select>
+      </div>
+
+      <button class="submit-btn" id="task2Btn" onclick="submitTask(2)">Confirm Role</button>
+      <div class="status-bar" id="status2"></div>
+    </div>
+
+    <!-- ===== TASK 3: Identify the Images ===== -->
+    <div class="task-card" id="task3">
+      <h3>Task 3 — What Are These Images?</h3>
+      <p class="task-desc">Can you tell what these images represent? Type your guess.</p>
+
+      <div class="image-section">
+        <div class="image-box">
+          <img id="img1" aria-hidden="true" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect fill='%234A90D9' width='80' height='80' rx='12'/%3E%3Crect fill='white' x='15' y='45' width='12' height='25' rx='2'/%3E%3Crect fill='white' x='34' y='25' width='12' height='45' rx='2'/%3E%3Crect fill='white' x='53' y='35' width='12' height='35' rx='2'/%3E%3C/svg%3E">
+          <p>Image 1</p>
+        </div>
+        <div class="image-box">
+          <img id="img2" aria-hidden="true" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect fill='%2316c79a' width='80' height='80' rx='12'/%3E%3Ccircle fill='none' stroke='white' stroke-width='3' cx='35' cy='55' r='5'/%3E%3Ccircle fill='none' stroke='white' stroke-width='3' cx='55' cy='55' r='5'/%3E%3Cpath fill='none' stroke='white' stroke-width='3' d='M15 20h8l10 25h22l5-15H30'/%3E%3C/svg%3E">
+          <p>Image 2</p>
+        </div>
+        <div class="image-box">
+          <img id="img3" aria-hidden="true" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect fill='%23e94560' width='80' height='80' rx='12'/%3E%3Ccircle fill='white' cx='40' cy='28' r='12'/%3E%3Cpath fill='white' d='M18 68c0-14 10-22 22-22s22 8 22 22z'/%3E%3C/svg%3E">
+          <p>Image 3</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label id="guessLabel">Your Guess</label>
+        <input type="text" id="guessInput" placeholder="What do these images show?" data-task="3">
+      </div>
+
+      <button class="submit-btn" id="task3Btn" onclick="submitTask(3)">Submit Guess</button>
+      <div class="status-bar" id="status3"></div>
+    </div>
+
+    <!-- ===== TASK 4: Navigate Table ===== -->
+    <div class="task-card" id="task4">
+      <h3>Task 4 — Find the Right Product</h3>
+      <p class="task-desc">Navigate this table. What is the price of "Wireless Mouse"?</p>
+
+      <table class="data-table" id="productTable">
+        <thead>
+          <tr>
+            <td class="hdr">Product</td>
+            <td class="hdr">Category</td>
+            <td class="hdr">Price</td>
+            <td class="hdr">Stock</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>USB Keyboard</td><td>Peripherals</td><td>29.99</td><td>142</td></tr>
+          <tr><td>Wireless Mouse</td><td>Peripherals</td><td>19.50</td><td>89</td></tr>
+          <tr><td>Monitor Stand</td><td>Accessories</td><td>45.00</td><td>34</td></tr>
+          <tr><td>Webcam HD</td><td>Electronics</td><td>64.99</td><td>56</td></tr>
+        </tbody>
+      </table>
+
+      <div class="form-group">
+        <label id="priceLabel">Price of Wireless Mouse</label>
+        <input type="text" id="priceInput" placeholder="Enter the price" data-task="4">
+      </div>
+
+      <button class="submit-btn" id="task4Btn" onclick="submitTask(4)">Submit Answer</button>
+      <div class="status-bar" id="status4"></div>
+    </div>
+
+    <!-- ===== TASK 5: Feedback Form ===== -->
+    <div class="task-card" id="task5">
+      <h3>Task 5 — Leave Feedback</h3>
+      <p class="task-desc">Rate your experience and leave a comment.</p>
+
+      <div class="form-group">
+        <label id="ratingLabel">Rating (1-5)</label>
+        <select id="ratingSelect" data-task="5">
+          <option value="">-- Rating --</option>
+          <option value="1">1 — Poor</option>
+          <option value="2">2 — Fair</option>
+          <option value="3">3 — Good</option>
+          <option value="4">4 — Very Good</option>
+          <option value="5">5 — Excellent</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label id="commentLabel">Comment</label>
+        <textarea id="commentInput" rows="3" placeholder="Share your thoughts..." data-task="5"></textarea>
+      </div>
+
+      <button class="submit-btn" id="task5Btn" onclick="submitTask(5)">Submit Feedback</button>
+      <div class="status-bar" id="status5"></div>
+    </div>
+
+    <!-- ===== WCAG CHECKLIST ===== -->
+    <div class="task-card" id="checklistCard">
+      <h3>WCAG Issues on This Page</h3>
+      <p class="task-desc">These are the accessibility problems that exist without WCAG:</p>
+      <ul class="checklist" id="checklist">
+        <li><span class="check">✗</span> No form labels — VoiceOver says "edit text" with no field name</li>
+        <li><span class="check">✗</span> No image alt text — VoiceOver says "image" with no description</li>
+        <li><span class="check">✗</span> No table semantics — VoiceOver reads flat text, no row/column context</li>
+        <li><span class="check">✗</span> No button descriptions — VoiceOver gives vague button names</li>
+        <li><span class="check">✗</span> No status announcements — VoiceOver misses success/error messages</li>
+        <li><span class="check">✗</span> No ARIA landmarks — VoiceOver cannot find page sections</li>
+        <li><span class="check">✗</span> No autocomplete — no input assistance from browser</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <!-- ===== RESULT MODAL ===== -->
+  <div class="result-overlay" id="resultOverlay" role="dialog" aria-modal="true" aria-label="Results">
+    <div class="result-modal">
+      <h2 id="resultTitle">Great Job!</h2>
+      <p id="resultMessage"></p>
+      <button class="close-modal" onclick="closeModal()" aria-label="Close results dialog">Got It</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== STATE =====
+    let wcagOn = false;
+    let contentRevealed = false;
+    let score = 0;
+    let tasksCompleted = { 1: false, 2: false, 3: false, 4: false, 5: false };
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let wcagTime = null;  // time when WCAG was first enabled
+    let noWcagTime = null; // time spent in no-wcag before enabling
+
+    // Start timer on first interaction
+    function startTimer() {
+      if (timerInterval) return;
+      timerInterval = setInterval(function() {
+        timerSeconds++;
+        var mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+        var secs = String(timerSeconds % 60).padStart(2, '0');
+        document.getElementById('timerDisplay').textContent = mins + ':' + secs;
+      }, 1000);
+    }
+
+    document.addEventListener('keydown', function() { startTimer(); }, { once: true });
+    document.addEventListener('click', function() { startTimer(); }, { once: true });
+
+    // ===== STEP TRACKING =====
+    function updateSteps() {
+      var s1 = document.getElementById('step1');
+      var s2 = document.getElementById('step2');
+      var s3 = document.getElementById('step3');
+
+      s1.className = 'step';
+      s2.className = 'step';
+      s3.className = 'step';
+
+      if (contentRevealed) {
+        s1.className = 'step done';
+        s2.className = 'step done';
+        s3.className = 'step current';
+      } else if (wcagOn) {
+        s1.className = 'step done';
+        s2.className = 'step current';
+      } else {
+        s1.className = 'step current';
+      }
+    }
+
+    // ===== TOGGLE WCAG =====
+    function toggleWCAG() {
+      wcagOn = !wcagOn;
+      var body = document.body;
+      var btn = document.getElementById('wcagBtn');
+      var badge = document.getElementById('modeBadge');
+
+      if (wcagOn) {
+        body.classList.remove('no-wcag');
+        body.classList.add('with-wcag');
+        btn.textContent = 'Disable WCAG';
+        btn.classList.add('active');
+        badge.textContent = 'WCAG ON';
+        badge.style.background = '#16c79a';
+
+        if (!noWcagTime) noWcagTime = timerSeconds;
+
+        applyWCAG();
+        announceToSR('WCAG enabled. VoiceOver will now read form labels, image descriptions, and table structure. Navigate again with Control Option Right Arrow to hear the difference.');
+      } else {
+        body.classList.remove('with-wcag');
+        body.classList.add('no-wcag');
+        btn.textContent = 'Enable WCAG';
+        btn.classList.remove('active');
+        badge.textContent = 'WCAG OFF';
+        badge.style.background = '#e94560';
+
+        removeWCAG();
+        announceToSR('WCAG disabled. VoiceOver will no longer read labels or image descriptions.');
+      }
+
+      updateSteps();
+    }
+
+    // ===== REVEAL CONTENT =====
+    function revealContent() {
+      contentRevealed = !contentRevealed;
+      var body = document.body;
+      var btn = document.getElementById('revealBtn');
+
+      if (contentRevealed) {
+        body.classList.remove('blind');
+        body.classList.add('revealed');
+        btn.textContent = 'Hide Content';
+        btn.classList.add('active');
+
+        // Also enable WCAG if not already
+        if (!wcagOn) {
+          toggleWCAG();
+        }
+
+        // Show comparison banner
+        document.getElementById('comparisonBanner').style.display = 'block';
+
+        // Update checklist to show fixed
+        updateChecklist(true);
+
+        announceToSR('Content revealed! You can now see everything that was hidden.');
+      } else {
+        body.classList.remove('revealed');
+        body.classList.add('blind');
+        btn.textContent = 'Reveal Content';
+        btn.classList.remove('active');
+
+        document.getElementById('comparisonBanner').style.display = 'none';
+        updateChecklist(false);
+      }
+
+      updateSteps();
+    }
+
+    // ===== APPLY WCAG ATTRIBUTES =====
+    function applyWCAG() {
+      // 1.1.1 — Image alt text + make tabbable so Tab stops on them
+      var imgAlts = {
+        'img1': 'Analytics Dashboard chart showing revenue data',
+        'img2': 'Shopping Cart icon for e-commerce',
+        'img3': 'User Profile avatar'
+      };
+      Object.keys(imgAlts).forEach(function(id) {
+        var img = document.getElementById(id);
+        if (img) {
+          img.setAttribute('alt', imgAlts[id]);
+          img.setAttribute('role', 'img');
+          img.setAttribute('aria-label', imgAlts[id]);
+          img.removeAttribute('aria-hidden');
+          img.setAttribute('tabindex', '0');
+        }
+      });
+
+      // 1.3.1 — Form label associations
+      var labelMap = {
+        'nameLabel': 'nameInput',
+        'emailLabel': 'emailInput',
+        'roleLabel': 'roleSelect',
+        'guessLabel': 'guessInput',
+        'priceLabel': 'priceInput',
+        'ratingLabel': 'ratingSelect',
+        'commentLabel': 'commentInput'
+      };
+      Object.keys(labelMap).forEach(function(labelId) {
+        var label = document.getElementById(labelId);
+        if (label) label.setAttribute('for', labelMap[labelId]);
+      });
+
+      // 1.3.1 — Convert header <td> back to <th> with scope for VoiceOver table nav
+      var table = document.getElementById('productTable');
+      var headerRow = table.querySelector('thead tr');
+      var headerCells = headerRow.querySelectorAll('td.hdr');
+      headerCells.forEach(function(td) {
+        var th = document.createElement('th');
+        th.setAttribute('scope', 'col');
+        th.textContent = td.textContent;
+        th.className = '';
+        th.setAttribute('tabindex', '0');
+        headerRow.replaceChild(th, td);
+      });
+
+      // Make all table body cells tabbable so Tab stops on each cell
+      table.querySelectorAll('tbody td').forEach(function(td) {
+        td.setAttribute('tabindex', '0');
+      });
+
+      // Add table caption for VoiceOver
+      if (!table.querySelector('caption')) {
+        var caption = document.createElement('caption');
+        caption.textContent = 'Product inventory with 4 items';
+        caption.className = 'sr-only';
+        table.insertBefore(caption, table.firstChild);
+      }
+
+      // 4.1.2 — Button aria-labels
+      document.getElementById('task1Btn').setAttribute('aria-label', 'Save registration form');
+      document.getElementById('task2Btn').setAttribute('aria-label', 'Confirm selected role');
+      document.getElementById('task3Btn').setAttribute('aria-label', 'Submit image guess');
+      document.getElementById('task4Btn').setAttribute('aria-label', 'Submit price answer');
+      document.getElementById('task5Btn').setAttribute('aria-label', 'Submit feedback');
+
+      // 1.3.1 — ARIA landmark
+      document.querySelector('main').setAttribute('aria-label', 'WCAG Challenge Tasks');
+
+      // 4.1.3 — Status message roles
+      for (var i = 1; i <= 5; i++) {
+        var status = document.getElementById('status' + i);
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        status.setAttribute('aria-atomic', 'true');
+      }
+
+      // 1.3.5 — Autocomplete
+      document.getElementById('nameInput').setAttribute('autocomplete', 'name');
+      document.getElementById('emailInput').setAttribute('autocomplete', 'email');
+    }
+
+    // ===== REMOVE WCAG ATTRIBUTES =====
+    function removeWCAG() {
+      // Hide images from screen readers + remove from tab order
+      ['img1', 'img2', 'img3'].forEach(function(id) {
+        var img = document.getElementById(id);
+        if (img) {
+          img.removeAttribute('alt');
+          img.removeAttribute('role');
+          img.removeAttribute('aria-label');
+          img.setAttribute('aria-hidden', 'true');
+          img.removeAttribute('tabindex');
+        }
+      });
+
+      // Remove label associations
+      document.querySelectorAll('label[for]').forEach(function(label) {
+        label.removeAttribute('for');
+      });
+
+      // Convert <th> back to <td> — strips table header semantics
+      var table = document.getElementById('productTable');
+      var caption = table.querySelector('caption');
+      if (caption) caption.remove();
+
+      var headerRow = table.querySelector('thead tr');
+      var thCells = headerRow.querySelectorAll('th');
+      thCells.forEach(function(th) {
+        var td = document.createElement('td');
+        td.className = 'hdr';
+        td.textContent = th.textContent;
+        headerRow.replaceChild(td, th);
+      });
+
+      // Remove tabindex from all table cells
+      table.querySelectorAll('td[tabindex], th[tabindex]').forEach(function(cell) {
+        cell.removeAttribute('tabindex');
+      });
+
+      // Remove button descriptions
+      document.querySelectorAll('.submit-btn').forEach(function(btn) {
+        btn.removeAttribute('aria-label');
+      });
+
+      // Remove landmark label
+      document.querySelector('main').removeAttribute('aria-label');
+
+      // Remove status roles
+      for (var i = 1; i <= 5; i++) {
+        var status = document.getElementById('status' + i);
+        status.removeAttribute('role');
+        status.removeAttribute('aria-live');
+        status.removeAttribute('aria-atomic');
+      }
+
+      // Remove autocomplete
+      document.getElementById('nameInput').removeAttribute('autocomplete');
+      document.getElementById('emailInput').removeAttribute('autocomplete');
+    }
+
+    // ===== SUBMIT TASK =====
+    function submitTask(taskNum) {
+      if (tasksCompleted[taskNum]) return;
+
+      var valid = false;
+      var msg = '';
+
+      switch (taskNum) {
+        case 1:
+          var name = document.getElementById('nameInput').value.trim();
+          var email = document.getElementById('emailInput').value.trim();
+          valid = name.length > 0 && email.length > 0;
+          msg = valid
+            ? 'Welcome, ' + name + '! Registration saved.'
+            : 'Please fill in both name and email.';
+          break;
+        case 2:
+          var role = document.getElementById('roleSelect').value;
+          valid = role !== '';
+          msg = valid
+            ? 'Role "' + role + '" confirmed.'
+            : 'Please select a role.';
+          break;
+        case 3:
+          var guess = document.getElementById('guessInput').value.trim();
+          valid = guess.length > 0;
+          msg = valid
+            ? 'You guessed: "' + guess + '". The images were: Analytics Dashboard, Shopping Cart, User Profile.'
+            : 'Please type your guess.';
+          break;
+        case 4:
+          var price = document.getElementById('priceInput').value.trim();
+          var correct = price.indexOf('19.50') !== -1 || price.indexOf('19.5') !== -1 || price.indexOf('$19.50') !== -1;
+          valid = price.length > 0;
+          msg = valid
+            ? (correct
+                ? 'Correct! The Wireless Mouse costs 19.50.'
+                : 'You answered "' + price + '". The correct price is 19.50.')
+            : 'Please enter a price.';
+          break;
+        case 5:
+          var rating = document.getElementById('ratingSelect').value;
+          var comment = document.getElementById('commentInput').value.trim();
+          valid = rating !== '' && comment.length > 0;
+          msg = valid
+            ? 'Thank you for your ' + rating + '-star feedback!'
+            : 'Please select a rating and write a comment.';
+          break;
+      }
+
+      var statusEl = document.getElementById('status' + taskNum);
+      statusEl.style.display = 'block';
+      statusEl.textContent = msg;
+
+      if (valid) {
+        statusEl.className = 'status-bar success';
+        tasksCompleted[taskNum] = true;
+        score++;
+        document.getElementById('scoreDisplay').textContent = score;
+
+        if (score === 5) showResult();
+      } else {
+        statusEl.className = 'status-bar error';
+      }
+    }
+
+    // ===== CHECKLIST =====
+    function updateChecklist(fixed) {
+      document.querySelectorAll('#checklist li').forEach(function(li) {
+        var check = li.querySelector('.check');
+        if (fixed) {
+          check.textContent = '✓';
+          check.classList.add('fixed');
+          li.style.color = '#155724';
+        } else {
+          check.textContent = '✗';
+          check.classList.remove('fixed');
+          li.style.color = '';
+        }
+      });
+    }
+
+    // ===== RESULT MODAL =====
+    function showResult() {
+      var overlay = document.getElementById('resultOverlay');
+      var title = document.getElementById('resultTitle');
+      var message = document.getElementById('resultMessage');
+
+      var mins = Math.floor(timerSeconds / 60);
+      var secs = timerSeconds % 60;
+
+      title.textContent = 'All 5 Tasks Complete!';
+      message.innerHTML =
+        'Finished in <strong>' + mins + 'm ' + secs + 's</strong>.<br><br>' +
+        (contentRevealed
+          ? 'Now you see the full picture — labels, alt text, table scopes, ARIA landmarks. <strong>These small code additions make the web usable for 1.3 billion people with disabilities worldwide.</strong>'
+          : 'You completed everything while blind! Click <strong>"Enable WCAG"</strong> to feel the difference with VoiceOver, then <strong>"Reveal Content"</strong> to see what was hidden.');
+
+      overlay.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('resultOverlay').style.display = 'none'; 
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ===== SCREEN READER ANNOUNCE =====
+    function announceToSR(message) {
+      var el = document.createElement('div');
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-live', 'assertive');
+      el.className = 'sr-only';
+      el.textContent = message;
+      document.body.appendChild(el);
+      setTimeout(function() { el.remove(); }, 3000);
+    }
+
+    // Init
+    updateChecklist(false);
+    updateSteps();
+  </script>
+</body>
+</html>
